@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import datetime
 from dagsim.base import Graph, Node
 
 SAMPLE_SIZE = 1000
@@ -8,11 +9,30 @@ SAMPLE_SIZE = 1000
 def my_range(stop):
     return range(stop)
 
+def get_date():
+    days = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
+    months = [1,2,3,4,5,6,7,8,9,10,11]
+    years = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]
+    format_data = "%Y%m%d"
+    date_rand = datetime.datetime(random.choice(years), random.choice(months), random.choice(days))
+    print(date_rand.strftime(format_data))
+    return date_rand.strftime(format_data)
+
 def serious_type_from_generator():
     if np.random.binomial(n=1, p=0.5) > 0.5:
         return 'Y'
     else:
         return 'N'
+
+def get_gender():
+    if np.random.binomial(n=1, p=0.5) > 0.5:
+        return '1'
+    else:
+        return '2'
+
+def get_age_group():
+    age_list = [1,2,3,4,5,6,7,8,9]
+    return random.choice(age_list)
 
 def get_seriousness():
     if np.random.binomial(n=1, p=0.6) > 0.5:
@@ -44,10 +64,52 @@ def get_timeonset_max(min):
 #        return "_"
 
 #VigiBase Relational class simulation functions
+
+def setup_simulation_demographic():
+    Prior1 = Node(name="UMCReportID", function=my_range, size_field="stop")
+    Prior2 = Node(name="AgeGroup", function=get_age_group)
+    Prior3 = Node(name="Gender", function=get_gender)
+    Prior4 = Node(name="DateDatabase", function=get_date)
+    Prior5 = Node(name="Type", function=get_seriousness)
+    Prior6 = Node(name="Region", function=get_seriousness)
+    Prior7 = Node(name="FirstDateDatabase", function=get_date)
+    listNodes = [Prior1, Prior2, Prior3, Prior4,Prior5, Prior6, Prior7]
+    my_graph = Graph(list_nodes=listNodes, name="Demographic Case Information")
+    output = my_graph.simulate(SAMPLE_SIZE, csv_name="demographic")
+    return output
+
+def setup_simulation_drug():
+    Prior1 = Node(name="UMCReportID", function=my_range, size_field="stop")
+    Prior2 = Node(name="Drug_ID", function=my_range, size_field="stop")
+    Prior3 = Node(name="MedicinalProd_ID", function=my_range, size_field="stop")
+    Prior4 = Node(name="DrecNo", function=np.random.normal, args = [600000, 150000])
+    Prior5 = Node(name="Seq1", function=np.random.normal, args = [10, 3])
+    Prior6 = Node(name="Seq2", function=np.random.normal, args = [100, 15])
+    Prior7 = Node(name="Route", function=np.random.normal, args = [100, 20])
+    Prior8 = Node(name="Basis", function=get_seriousness)
+    Prior9 = Node(name="Amount", function=np.random.normal, args = [1000, 150])
+    Prior10 = Node(name="AmountU", function=get_seriousness)
+    Prior11 = Node(name="Frequency", function=get_seriousness)
+    Prior12 = Node(name="FrequencyU", function=np.random.normal, args = [1000, 450])
+    listNodes = [Prior1, Prior2, Prior3, Prior4,Prior5, Prior6, Prior7, Prior8, Prior9, Prior10, Prior11, Prior12]
+    my_graph = Graph(list_nodes=listNodes, name="Drug Information")
+    output = my_graph.simulate(SAMPLE_SIZE, csv_name="drug")
+    return output
+
+def setup_simulation_reaction():
+    Prior1 = Node(name="UMCReportID", function=my_range, size_field="stop")
+    Prior2 = Node(name="AdrID", function=my_range, size_field="stop")
+    Prior3 = Node(name="MedDRA_ID", function=my_range, size_field="stop")
+    Prior4 = Node(name="Outcome", function=get_seriousness)
+    listNodes = [Prior1, Prior2, Prior3, Prior4]
+    my_graph = Graph(list_nodes=listNodes, name="Adverse Drug Reaction Information")
+    output = my_graph.simulate(SAMPLE_SIZE, csv_name="reaction")
+    return output
+
 def setup_simulation_out():
-    Prior1 = Node(name="UMCReportID", function=my_range, size_field="stop")  # UMCReportID_generator, arguments={})
+    Prior1 = Node(name="UMCReportID", function=my_range, size_field="stop")
     Prior2 = Node(name="Seriousness", function=get_seriousness)  # , kwargs={"n": 6, "p": 0.166})
-    Prior3 = Node(name="Serious", function=serious_type_from_generator) #, arguments={})
+    Prior3 = Node(name="Serious", function=serious_type_from_generator)
     listNodes = [Prior1, Prior2, Prior3]
     my_graph = Graph(list_nodes=listNodes, name="Serious Information")
     output = my_graph.simulate(SAMPLE_SIZE, csv_name="out")
@@ -92,6 +154,9 @@ def setup_simulation_report_followup():
     return output
 
 def simulate_world(SAMPLE_SIZE):
+    setup_simulation_drug()
+    setup_simulation_demographic()
+    setup_simulation_reaction()
     setup_simulation_out()
     setup_simulation_link_of_drug_reaction_pair()
     setup_simulation_report_source()
